@@ -26,13 +26,14 @@ Backend (`cd backend`):
 
 Frontend (`cd frontend`):
 - `pnpm dev`, `pnpm build` (`tsc -b && vite build`), `pnpm lint` (ESLint), `pnpm preview`
-- `pnpm test`: Vitest (not yet configured for jsdom; see `frontend/AGENTS.md`). Single test: `pnpm vitest run src/path/file.test.tsx` or `pnpm vitest run -t "name"`.
+- `pnpm test`: Vitest in jsdom. Single test: `pnpm vitest run src/path/file.test.tsx` or `pnpm vitest run -t "name"`.
+- Dev setup: copy `frontend/.env.example` to `.env.local` and point `API_PROXY_TARGET` at the backend's port.
 
 ## Frontend conventions (summary of frontend/AGENTS.md)
 
-- `tsconfig.app.json` uses `verbatimModuleSyntax` (use `import type`) and `erasableSyntaxOnly` (no `enum`, `namespace`, or constructor parameter properties). `strict` is not enabled.
-- Tailwind 4 is configured in CSS (`@import "tailwindcss"`, `@theme`); there is no `tailwind.config.js`.
-- No dev proxy or API base URL is configured yet; a Vite `server.proxy` keeps the auth cookie same-origin in development.
+- `tsconfig.app.json` is `strict` and uses `verbatimModuleSyntax` (use `import type`) and `erasableSyntaxOnly` (no `enum`, `namespace`, or constructor parameter properties).
+- Tailwind 4 is configured in CSS; use the semantic token utilities from `src/index.css` (`bg-paper`, `text-ink`, `border-field`…), never raw hex. Light and dark come from `prefers-color-scheme`.
+- Vite proxies `/api/*` to the backend (prefix stripped), so the httpOnly cookie is same-origin in development.
 
 ## Backend conventions (from backend/AGENTS.md)
 
@@ -59,4 +60,8 @@ Frontend (`cd frontend`):
 - **Messages:** user-facing copy lives in `VALIDATION_MESSAGES` / `AUTH_MESSAGES` in the same file; the frontend reuses it word for word. Each password rule is a separate check (`src/common/validation/password-rules.ts`), because two `@Matches` on one field overwrite each other in class-validator.
 - **400 shape:** `{ statusCode, error, message: "Please check the highlighted fields", errors: { field: string[] } }`, built by `validationExceptionFactory`. A missing field returns only its "required" message; password returns every unmet rule. 401/409/429 return a single `message`.
 
-**Frontend (not built yet).** Forms use `react-hook-form` + `zod`, routing uses `react-router-dom`. Requests must send credentials so the auth cookie is included.
+**Frontend.** Routes: `/` (app page, signed-in only), `/sign-in` and `/sign-up` (guests only); guards in `src/auth/route-guards.tsx`.
+
+- **Session:** `AuthProvider` asks `GET /users/me` on load (the cookie isn't readable from JS) and exposes `useAuth()`.
+- **API:** every call goes through `src/lib/api.ts` (`credentials: 'include'`), which throws `ApiError { status, message, fieldErrors }`; forms hand it to `applyServerError()`.
+- **Validation:** `src/lib/validation-contract.ts` is a copy of the backend contract, kept identical by `validation-contract.test.ts` (it imports the backend file). Change both together.
