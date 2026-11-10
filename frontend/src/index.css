@@ -14,7 +14,11 @@
   --primary: #0f6e5c;
   --primary-hover: #0b5a4b;
   --on-primary: #ffffff;
-  --mark: #f9d55b;
+  /* Password strength bar, one color per number of rules met */
+  --strength-1: #d92d20;
+  --strength-2: #ef6820;
+  --strength-3: #eaaa08;
+  --strength-4: #079455;
   --danger: #b42318;
   --danger-surface: #fdecea;
   color-scheme: light;
@@ -31,7 +35,10 @@
     --primary: #3fc3a3;
     --primary-hover: #66d4b9;
     --on-primary: #0b1a16;
-    --mark: #e6c24a;
+    --strength-1: #f97066;
+    --strength-2: #fd853a;
+    --strength-3: #fac515;
+    --strength-4: #3fc3a3;
     --danger: #ff8a7a;
     --danger-surface: #3a1c1c;
     color-scheme: dark;
@@ -48,7 +55,10 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-on-primary: var(--on-primary);
-  --color-mark: var(--mark);
+  --color-strength-1: var(--strength-1);
+  --color-strength-2: var(--strength-2);
+  --color-strength-3: var(--strength-3);
+  --color-strength-4: var(--strength-4);
   --color-danger: var(--danger);
   --color-danger-surface: var(--danger-surface);
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;

@@ -22,7 +22,7 @@ React 19, Vite 8, TypeScript 6, Tailwind CSS 4, react-router-dom 7, react-hook-f
 
 ## Styling
 
-Tailwind CSS 4 via the `@tailwindcss/vite` plugin; there is no `tailwind.config.js`. Design tokens live in `src/index.css`: semantic CSS variables on `:root` (redefined for `prefers-color-scheme: dark`) exposed to Tailwind through `@theme inline` as `bg-paper`, `text-ink`, `border-field`, `bg-primary`, `bg-mark` and so on. Use those utilities, never raw hex. `--field` is the 3:1-contrast border for inputs; `--line` is only for decorative lines. Fonts are self-hosted with Fontsource: Bricolage Grotesque (`font-display`, headings) and Atkinson Hyperlegible (body).
+Tailwind CSS 4 via the `@tailwindcss/vite` plugin; there is no `tailwind.config.js`. Design tokens live in `src/index.css`: semantic CSS variables on `:root` (redefined for `prefers-color-scheme: dark`) exposed to Tailwind through `@theme inline` as `bg-paper`, `text-ink`, `border-field`, `bg-primary`, `bg-strength-1`…`bg-strength-4` (password bar: red, orange, yellow, green) and so on. Use those utilities, never raw hex. `--field` is the 3:1-contrast border for inputs; `--line` is only for decorative lines. Fonts are self-hosted with Fontsource: Bricolage Grotesque (`font-display`, headings) and Atkinson Hyperlegible (body).
 
 ## Testing
 

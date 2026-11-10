@@ -6,12 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Two independent pnpm projects (no workspace root, no root package.json). Run commands from inside each directory:
 
-- `backend/`: NestJS 12 API (Express adapter). Note: `backend/` contains its own nested `.git` repo, separate from the root repo.
+- `backend/`: NestJS 12 API (Express adapter).
 - `frontend/`: React 19 + Vite 8 + Tailwind CSS 4 SPA.
 
 Each project has an `AGENTS.md` with its detailed conventions. Read `backend/AGENTS.md` or `frontend/AGENTS.md` before working in that directory.
 
-`AI.md` documents how AI was used on this project; update its table when AI-assisted work changes.
+`AI.md` documents how AI was used on this project; update its table when AI-assisted work changes. `README.md` (root) is the user-facing setup guide; the per-project READMEs only point to it.
+
+CI (`.github/workflows/ci.yml`, Node 24, pnpm 10) runs lint, build and all tests for both projects on pushes to `main` and on PRs. Lockfiles must stay in sync (`--frozen-lockfile`).
 
 ## Commands
 

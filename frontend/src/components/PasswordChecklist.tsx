@@ -1,12 +1,21 @@
 import { PASSWORD_RULES } from "../lib/auth-schemas.ts";
 
+/** Bar color by number of rules met: red, orange, yellow, then green when all pass. */
+const STRENGTH_COLORS = [
+  "bg-strength-1",
+  "bg-strength-2",
+  "bg-strength-3",
+  "bg-strength-4",
+] as const;
+
 /**
- * Live password requirements. The bar fills left to right like a highlighter as
+ * Live password requirements. The bar fills left to right and changes color as
  * rules are met; the list says which ones, so color is never the only signal.
  */
 export function PasswordChecklist({ password }: { password: string }) {
   const results = PASSWORD_RULES.map((rule) => ({ ...rule, met: rule.test(password) }));
   const metCount = results.filter((r) => r.met).length;
+  const fillColor = STRENGTH_COLORS[metCount - 1] ?? "bg-line";
 
   return (
     <div>
@@ -15,7 +24,7 @@ export function PasswordChecklist({ password }: { password: string }) {
           <span
             key={rule.id}
             className={`h-1.5 flex-1 rounded-full transition-colors duration-300 motion-reduce:transition-none ${
-              index < metCount ? "bg-mark" : "bg-line"
+              index < metCount ? fillColor : "bg-line"
             }`}
           />
         ))}

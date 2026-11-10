@@ -25,7 +25,7 @@ export function Button({
       {...props}
       disabled={disabled || pending}
       aria-busy={pending || undefined}
-      className={`inline-flex items-center justify-center rounded-lg px-5 py-2.5 font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center rounded-lg px-5 py-2.5 font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${className}`}
     >
       {pending && pendingLabel ? pendingLabel : children}
     </button>

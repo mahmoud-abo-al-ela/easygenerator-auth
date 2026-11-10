@@ -11,9 +11,9 @@ export function AuthLayout({
   footer?: ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col justify-center px-4 py-12 sm:px-0">
+    <main className="mx-auto flex min-h-dvh w-full flex-col justify-center px-4 py-12 sm:w-md sm:px-0">
       <title>{title}</title>
-      <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+      <h1 className="font-display text-4xl font-bold tracking-tight text-ink">
         {title}
       </h1>
       <div className="mt-8">{children}</div>

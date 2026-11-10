@@ -36,9 +36,11 @@ export function TextField({
           id={inputId}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={`block w-full rounded-lg border bg-surface px-3.5 py-2.5 text-base text-ink transition-colors placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-            error ? "border-danger" : "border-field hover:border-ink-muted"
-          } ${trailing ? "pr-20" : ""}`}
+          className={`block w-full rounded-lg border bg-surface px-3.5 py-2.5 text-base text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-muted focus:ring-4 ${
+            error
+              ? "border-danger focus:ring-danger/20"
+              : "border-field hover:border-ink-muted focus:border-primary focus:ring-primary/20"
+          } ${trailing ? "pr-12" : ""}`}
           {...inputProps}
         />
         {trailing && (
