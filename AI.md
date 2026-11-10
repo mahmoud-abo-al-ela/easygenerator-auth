@@ -1,78 +1,77 @@
 # AI Usage
 
-## Tools
+## Overview
 
-- **Claude Code** as the main assistant, for project context files, planning, backend code, tests and verification runs.
-- Claude Code features I relied on: `/init` (project context), **plan mode** (review before any code is written), the `senior-backend` skill, the `senior-security` skill and the `clean-code` skill.
+I used **Claude Code** as my primary AI development assistant. AI generated most of the implementation, while I owned the architecture, technical decisions, security requirements, and review of the final output.
 
-## How I worked
+My approach was to use AI to accelerate implementation without delegating engineering judgment. I defined the requirements, challenged proposed solutions, reviewed the generated code, and verified the application through automated and manual testing.
 
-1. **Gave the AI project context first.** I ran `/init` to generate `CLAUDE.md`.
-2. **Plan first, code second.** In plan mode, Claude explored the repo and wrote a file-by-file plan (modules, DTOs, cookie options, guard, tests, verification). I reviewed the plan before any code was written. Correcting a plan is much cheaper than correcting generated code.
-3. **"Approve with changes" instead of re-prompting.** I approved the plan with five specific corrections (listed below). Claude applied them, and they became the source of several test cases.
-4. **Verification was part of the plan, not an afterthought.** The plan ended with lint, build, unit tests, e2e tests and a manual run of the built app against a real MongoDB. The manual run caught a bug that the tests missed (see below).
-5. **A separate security pass after the code worked.** I asked for a security review of the finished backend instead of trusting the generated code. It found issues the first version shipped with, and I choose which ones to fix (see below).
-6. **A clean-code pass at the end.** With everything working and tested, I asked for a clean-code review (SRP, DRY, YAGNI, naming) and had it applied as pure refactors, with the full test suite as the safety net.
+## What Was AI-Assisted
 
-## Decisions I made or changed from the AI's proposal
+AI assisted with most stages of development:
 
-| Topic                  | AI proposed                                    | What I decided and why                                                                                                                            |
-| ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Token storage          | n/a (my decision up front)                     | JWT in an **httpOnly cookie**, not localStorage, so it can't be read by injected scripts (XSS)                                                    |
-| Name length            | min 3 only                                     | Also **max 50** characters                                                                                                                        |
-| Password special char  | `[^A-Za-z\d]`, which accepted a space          | `[^A-Za-z\d\s]`: whitespace does not count as a special character (`"Password1 "` must fail)                                                      |
-| Sign-in DTO            | only check that email and password are present | Still **trim and lowercase the email**, otherwise `" Jane@Example.com "` can't sign in. Password stays presence-only so the policy isn't revealed |
-| Local MongoDB          | `docker run mongo:8`                           | A `docker-compose.yml` (`docker compose up -d`)                                                                                                   |
-| Swagger path           | `/docs`                                        | `/api/docs`                                                                                                                                       |
-| Password error message | generated text                                 | Reworded it myself                                                                                                                                |
+- **Project setup:** Scaffolding and configuration.
+- **Backend:** NestJS configuration, authentication, JWT guards, validation, and API endpoints.
+- **Frontend:** Forms, Zod schemas, routing, validation, and UI implementation.
+- **Testing:** Unit and end-to-end test generation.
 
-## What had to be fixed
+My responsibility was to establish the architecture and constraints, review implementation plans before execution, correct unsuitable suggestions, and verify the resulting application.
 
-- **Runtime crash the tests missed.** `import { ConnectionStates } from 'mongoose'` compiled and passed all tests, but the built app crashed under plain Node, because mongoose is CommonJS and that name isn't an ESM named export. The manual run of `dist/main.js` found it. Lesson: passing tests don't prove the production build starts.
+## What Worked Well
 
-### Security review findings
+**1. Context First**
 
-The first working version had these issues. All were found by the review, not by the tests.
+I used `/init` to generate `CLAUDE.md`, documenting the project's architecture and technical constraints. This gave Claude persistent project context, including important details such as NestJS 12 being ESM-only and the use of Vitest for testing.
 
-| Finding                                                                                                                                                      | Fix                                                                                                         |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| **Login CSRF.** Nest accepts form-encoded bodies by default, so an attacker's page could sign a victim into the attacker's account (confirmed: 200 + cookie) | Middleware rejects non-JSON bodies with 415; body-less POSTs like sign-out still work. Covered by e2e tests |
-| **Placeholder JWT secret passed validation.** The `.env.example` value is 50 characters, so a copied example file would sign tokens with a public secret     | Startup fails if `JWT_SECRET` still contains the placeholder marker                                         |
-| **Unsafe default when `NODE_ENV` is unset.** It defaulted to `development`, so cookies lost the `Secure` flag                                                | Defaults to `production`; cookies are `Secure` unless `NODE_ENV` is explicitly `development` or `test`      |
-| **Rate limiting behind a proxy.** Behind a load balancer all users share one IP, so 5 sign-ins/min would apply to everyone                                   | `TRUST_PROXY_HOPS` env var sets Express `trust proxy`; default 0, so a spoofed `X-Forwarded-For` is ignored |
+**2. Plan First, Then Approve With Changes**
 
-## What was AI-assisted
+I used Plan Mode before implementation. Claude proposed a file-by-file implementation plan, which I reviewed and corrected before allowing it to write code. This helped catch architectural issues early rather than fixing them after implementation.
 
-| Area                                                            | AI-assisted? | What I did myself                                                                       |
-| --------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------- |
-| Project scaffolding (NestJS, Vite)                              | Yes          | Checked and ran the commands                                                            |
-| `CLAUDE.md` / `AGENTS.md` context files                         | Yes          | Reviewed them; they define the rules the AI follows in this repo                        |
-| Backend config, bootstrap, Helmet, CORS, logging, rate limiting | Yes          | Reviewed the plan; chose the throttling limits and log redaction (passwords, cookies)   |
-| User schema and DTO validation                                  | Yes          | Set the validation rules (name 3 to 50, password regex, email normalization on sign-in) |
-| Auth service, JWT and guard                                     | Yes          | Chose httpOnly cookie storage, argon2, generic sign-in errors                           |
-| Tests                                                           | Yes          | Edge cases came from my corrections                                                     |
-| Frontend forms and Zod schema                                   | Pending      | To do                                                                                   |
-| README / CI                                                     | Pending      | To do                                                                                   |
-| Swagger                                                         | Yes          | Chose the `/api/docs` path                                                              |
+**3. Verification Built Into Every Plan**
 
-## How I verified the output
+I required every implementation plan to include verification steps:
 
-- `pnpm lint` and `pnpm build`: clean.
-- `pnpm audit --prod`: no known vulnerabilities.
-- `pnpm test`: 54 unit tests (DTO rules and messages, validation error format, env validation, cookie options, auth service, JWT guard).
-- `pnpm test:e2e`: 20 e2e tests against an in-memory MongoDB, including exact error messages and the login CSRF fix.
-- Manual run of the built app against a local MongoDB, using curl:
-  - sign-up → `/users/me` → sign-in → sign-out → `/users/me` returns 401
-  - the session cookie is `HttpOnly`
-  - responses never contain the password hash
-  - a wrong password returns the generic "Email or password is incorrect"
-  - an invalid sign-up returns per-field messages
-  - the 6th sign-in attempt within a minute returns 429 with a friendly message
-  - a form-encoded sign-in from another origin returns 415 and sets no cookie
-  - the server refuses to start with the placeholder `JWT_SECRET`
-  - passwords and cookies are redacted in the logs
-  - Swagger UI loads under Helmet's Content Security Policy
+- ESLint and build checks.
+- Unit and end-to-end tests.
+- Manual API testing using curl.
+- Frontend verification using Playwright in a real browser.
 
-## To be completed
+This ensured that generated code was not considered complete simply because it compiled.
 
-The frontend (sign-up, sign-in and application pages), README and CI are still in progress. This file will be updated with how AI was used for them.
+**4. Separate Review Passes**
+
+After the implementation worked, I ran separate security and clean-code reviews. Keeping these reviews separate from implementation helped identify issues that could otherwise be overlooked during feature development.
+
+## Decisions I Made Differently
+
+I challenged several AI-generated suggestions and made decisions based on the application's requirements and security considerations.
+
+| AI proposal / default                  | My decision                                                                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| JWT authentication storage             | Use an **httpOnly cookie** instead of localStorage to prevent JavaScript from directly reading the authentication token. |
+| Name validation: minimum 3 characters  | Enforce both minimum 3 and maximum 50 characters.                                                                        |
+| Special character: `[^A-Za-z\d]`       | Use `[^A-Za-z\d\s]` so whitespace does not satisfy the special-character requirement.                                    |
+| Sign-in: check that fields are present | Normalize email by trimming whitespace and converting it to lowercase before authentication.                             |
+| Flat list of validation messages       | Use plain validation messages grouped by field and shared consistently between frontend and backend.                     |
+
+## What Had to Be Fixed
+
+**1. CSRF Handling and Sign-Out**
+
+The initial CSRF implementation caused an end-to-end test failure during sign-out. Browsers can send an empty POST request with `Content-Length: 0`, which Express still treats as a request with a body.
+
+This exposed an issue in how empty-body requests were handled. I investigated the request behavior and adjusted the implementation so legitimate sign-out requests could work without weakening CSRF protection for state-changing requests.
+
+**2. Accessibility: Input Border Contrast**
+
+An accessibility check revealed that the input borders had a contrast ratio of approximately 1.5:1, below the 3:1 minimum for visual component boundaries.
+
+I increased the border contrast to make form fields easier to distinguish and improve accessibility.
+
+## README and CI
+
+The README and the GitHub Actions workflow were also AI-generated from a short brief. I checked that every command and default in the README matches the code, and that the CI steps match what I run locally (frozen-lockfile install, lint, build, unit and e2e tests).
+
+---
+
+**Final takeaway:** AI handled much of the implementation, but the architecture, security decisions, verification strategy, and final engineering judgment remained my responsibility.
